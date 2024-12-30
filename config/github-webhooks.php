@@ -21,9 +21,9 @@ return [
      * You can use "*" to let a job handle all sent webhook types
      */
     'jobs' => [
-         'ping' => \App\Jobs\PingWebhook::class,
-        // 'issues.opened' => \App\Jobs\GitHubWebhooks\HandleIssueOpenedWebhookJob::class,
-        // '*' => \App\Jobs\GitHubWebhooks\HandleAllWebhooks::class
+         'ping' => \App\Jobs\GitHubWebhooks\HandlePingWebhook::class,
+         'issues.opened' => \App\Jobs\GitHubWebhooks\HandleIssueOpenedWebhookJob::class,
+         '*' => \App\Jobs\GitHubWebhooks\HandleAllWebhooks::class
     ],
 
     /*
