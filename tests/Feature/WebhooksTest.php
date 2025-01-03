@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\HeaderBag;
 beforeEach(function () {
     Route::githubWebhooks('webhooks');
 
-    config()->set('github-webhooks.signing_secret', 'abc123');
+    config()->set('github-webhooks.signing_secret', 'Signature');
 
     Bus::fake([
         HandleAllIssuesWebhookJob::class,

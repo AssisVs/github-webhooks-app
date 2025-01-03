@@ -8,6 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Testing\Fluent\Concerns\Interaction;
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
 
 class PingWebhook implements ShouldQueue
 {

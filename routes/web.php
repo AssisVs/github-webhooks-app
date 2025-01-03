@@ -19,4 +19,4 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-Route::githubWebhooks('github-webhooks');
+Route::githubWebhooks('webhook');
