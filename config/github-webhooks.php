@@ -23,7 +23,7 @@ return [
     'jobs' => [
         // 'ping' => \App\Jobs\PingWebhook::class,
         // 'issues.opened' => \App\Jobs\GitHubWebhooks\HandleIssueOpenedWebhookJob::class,
-        '*' => \App\Jobs\GitHubWebhooks\HandleAllWebhooks::class
+        '*' => \App\Jobs\HandleAllWebhooks::class
     ],
 
     /*
