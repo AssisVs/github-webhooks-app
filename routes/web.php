@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ListaController;
+use App\Http\Controllers\ShowController;
 use App\Http\Controllers\ListaJobController;
 use App\Http\Controllers\TesteController;
 use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
@@ -12,9 +12,6 @@ Route::get('/', function () {
     ds('Dashboard');
     return  view('dashboard');
 });
-
-
-Route::get('listahook', [ListaController::class, 'lista'])->name('listahook');
 
 Route::get('listajob', [ListaJobController::class, 'listajob'])->name('listajob');
 
@@ -32,6 +29,6 @@ require __DIR__ . '/auth.php';
 
 Route::githubWebhooks('webhook');
 
+Route::get('/showhook', [ShowController::class, 'showArray'])->name('showhook');
 
 Route::get('/teste', [TesteController::class, 'showArray']);
-
