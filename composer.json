@@ -22,7 +22,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laradumps/laradumps": "3.0",
+        "laradumps/laradumps": "*",
         "laravel/breeze": "^2.3",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
