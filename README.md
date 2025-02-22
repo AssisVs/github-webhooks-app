@@ -1,66 +1,397 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+GitHub can notify your application of events using webhooks. This package can help you handle
+those webhooks. 
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Out of the box, it will verify the GitHub signature of all incoming requests. All valid calls will be
+logged to the database. The package allows you to easily define jobs or events that should be dispatched when specific webhooks hit your
+app. 
 
-## About Laravel
+Here's an example of such a job.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```php
+namespace App\Jobs\GitHubWebhooks;
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+class HandleIssueOpenedWebhookJob implements ShouldQueue
+{
+    use InteractsWithQueue, Queueable, SerializesModels;
 
-## Learning Laravel
+    public GitHubWebhookCall $gitHubWebhookCall;
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    public function __construct(
+        public GitHubWebhookCall $webhookCall
+    ) {}
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+    public function handle()
+    {
+        // React to the issue opened at GitHub event here
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+        // You can access the payload of the GitHub webhook call with `$this->webhookCall->payload()`
+    }
+}
+```
 
-## Laravel Sponsors
+Before using this package we highly recommend
+reading [the entire documentation on webhooks over at GitHub](https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Are you a visual learner?
 
-### Premium Partners
+In [this stream on YouTube](https://www.youtube.com/watch?v=BKJbd-VlV88), I show how to use package, go over the source code, and explain how the package is tested.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Support us
+
+[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-github-webhooks.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-github-webhooks)
+
+We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can
+support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+
+We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using.
+You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards
+on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+
+## Installation
+
+You can install the package via composer:
+
+```bash
+composer require spatie/laravel-github-webhooks
+```
+
+You must publish the config file with:
+
+```bash
+php artisan vendor:publish --provider="Spatie\GitHubWebhooks\GitHubWebhooksServiceProvider" --tag="github-webhooks-config"
+```
+
+This is the contents of the config file that will be published at `config/github-webhooks.php`:
+
+```php
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
+use Spatie\GitHubWebhooks\Jobs\ProcessGitHubWebhookJob;
+use Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile;
+
+return [
+    /*
+     * GitHub will sign each webhook using a secret. You can find the used secret at the
+     * webhook configuration settings: https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks.
+     */
+    'signing_secret' => env('GITHUB_WEBHOOK_SECRET'),
+
+    /*
+     * You can define the job that should be run when a certain webhook hits your application
+     * here.
+     *
+     * You can find a list of GitHub webhook types here:
+     * https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads.
+     * 
+     * You can use "*" to let a job handle all sent webhook types
+     */
+    'jobs' => [
+        // 'ping' => \App\Jobs\GitHubWebhooks\HandlePingWebhook::class,
+        // 'issues.opened' => \App\Jobs\GitHubWebhooks\HandleIssueOpenedWebhookJob::class,
+        // '*' => \App\Jobs\GitHubWebhooks\HandleAllWebhooks::class
+    ],
+
+    /*
+     * This model will be used to store all incoming webhooks.
+     * It should be or extend `Spatie\GitHubWebhooks\Models\GitHubWebhookCall`
+     */
+    'model' => GitHubWebhookCall::class,
+
+    /*
+     * When running `php artisan model:prune` all stored GitHub webhook calls
+     * that were successfully processed will be deleted.
+     *
+     * More info on pruning: https://laravel.com/docs/8.x/eloquent#pruning-models
+     */
+    'prune_webhook_calls_after_days' => 10,
+
+    /*
+     * The classname of the job to be used. The class should equal or extend
+     * Spatie\GitHubWebhooks\ProcessGitHubWebhookJob.
+     */
+    'job' => ProcessGitHubWebhookJob::class,
+
+    /**
+     * This class determines if the webhook call should be stored and processed.
+     */
+    'profile' => ProcessEverythingWebhookProfile::class,
+
+    /*
+     * When disabled, the package will not verify if the signature is valid.
+     * This can be handy in local environments.
+     */
+    'verify_signature' => env('GITHUB_SIGNATURE_VERIFY', true),
+];
+```
+
+In the `signing_secret` key of the config file you should add a valid webhook secret. You can find the secret used
+at [the webhook configuration settings on the GitHub dashboard](https://dashboard.github.com/account/webhooks).
+
+Next, you must publish the migration with:
+
+```bash
+php artisan vendor:publish --provider="Spatie\GitHubWebhooks\GitHubWebhooksServiceProvider" --tag="github-webhooks-migrations"
+```
+
+After the migration has been published, you can create the `github_webhook_calls` table by running the migrations:
+
+```bash
+php artisan migrate
+```
+
+Finally, take care of the routing: At the GitHub webhooks settings of a repo you must
+configure at what URL GitHub webhooks should be sent. In the routes file of your app you must pass that route
+to the `Route::githubWebhooks` route macro:
+
+```php
+Route::githubWebhooks('webhook-route-configured-at-the-github-webhooks-settings');
+```
+
+Make sure when configuring the webhook url that the webhooks are send as `application/json` and not as `application/x-www-form-urlencoded`.
+
+
+Behind the scenes this macro will register a `POST` route to a controller provided by this package. We recommend to put it in the `api.php` routes file, so no session is created when a webhook comes in, and no CSRF token is needed.
+
+
+Should you, for any reason, have to register the route in your `web.php` routes file, then you must add that route to the `except` array of the `VerifyCsrfToken` middleware:
+
+```php
+protected $except = [
+    'webhook-route-configured-at-the-github-webhooks-settings',
+];
+```
+
+## Usage
+
+GitHub will send out webhooks for several event types. You can find
+the [full list of events types](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads)
+in the GitHub documentation.
+
+GitHub will sign all requests hitting the webhook url of your app. This package will automatically verify if the
+signature is valid. If it is not, the request was probably not sent by GitHub.
+
+Unless something goes terribly wrong, this package will always respond with a `200` to webhook requests. Sending a `200`
+will prevent GitHub from resending the same event over and over again. All webhook requests with a valid signature will
+be logged in the `github_webhook_calls` table. The table has a `payload` column where the entire payload of the incoming
+webhook is saved.
+
+If the signature is not valid, the request will not be logged in the `github_webhook_calls` table but
+a `Spatie\GitHubWebhooks\WebhookFailed` exception will be thrown. If something goes wrong during the webhook request the
+thrown exception will be saved in the `exception` column. In that case the controller will send a `500` instead of `200`.
+
+There are two ways this package enables you to handle webhook requests: you can opt to queue a job or listen to the
+events the package will fire.
+
+### Handling webhook requests using jobs
+
+If you want to do something when a specific event type comes in you can define a job that does the work. Here's an
+example of such a job:
+
+```php
+namespace App\Jobs\GitHubWebhooks;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
+
+class HandleIssueOpenedWebhookJob implements ShouldQueue
+{
+    use InteractsWithQueue, Queueable, SerializesModels;
+
+    public GitHubWebhookCall $gitHubWebhookCall;
+
+    public function __construct(
+        public GitHubWebhookCall $webhookCall
+    ) {}
+
+    public function handle()
+    {
+        // do your work here
+
+        // you can access the payload of the webhook call with `$this->webhookCall->payload`
+    }
+}
+```
+
+We highly recommend that you make this job queueable, because this will minimize the response time of the webhook
+requests. This allows you to handle more GitHub webhook requests and avoid timeouts.
+
+After having created your job you must register it at the `jobs` array in the `github-webhooks.php` config file. The key
+should be the name of [the GitHub event type](https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types). Optionally, you can let it follow with a dot and the value that is in the action key of the payload of a event.
+
+```php
+// config/github-webhooks.php
+
+'jobs' => [
+    'issues.opened' => \App\Jobs\GitHubWebhooks\HandleIssueOpenedWebhookJob::class, // will be called when issues are opened
+    'issues' => \App\Jobs\GitHubWebhooks\HandleIssuesWebhookJob::class, // will be called when issues are opened, created, deleted, ...
+    '*' => \App\Jobs\GitHubWebhooks\HandleAllWebhooksJob::class, // will be called when any event/action comes in
+],
+```
+
+### Working with a `GitHubWebhookCall` model
+
+The `Spatie\GitHubWebhooks\Models\GitHubWebhookCall` model contains some handy methods:
+
+- `headers()`: returns an instance of `Symfony\Component\HttpFoundation\HeaderBag` containing all headers used on the request
+- `eventActionName()`: returns the event name and action name of a webhooks, for example `issues.opened`
+- `payload($key = null)`: returns the payload of the webhook as an array. Optionally, you can pass a key in the payload which value you needed. For deeply nested values you can use dot notation (example: `$githubWebhookCall->payload('issue.user.login');`).
+
+### Handling webhook requests using events
+
+Instead of queueing jobs to perform some work when a webhook request comes in, you can opt to listen to the events this
+package will fire. Whenever a valid request hits your app, the package will fire
+a `github-webhooks::<name-of-the-event>` event.
+
+The payload of the events will be the instance of `GitHubWebhookCall` that was created for the incoming request.
+
+Let's take a look at how you can listen for such an event. In the `EventServiceProvider` you can register listeners.
+
+```php
+/**
+ * The event listener mappings for the application.
+ *
+ * @var array
+ */
+protected $listen = [
+    'github-webhooks::issues.opened' => [
+        App\Listeners\IssueOpened::class,
+    ],
+];
+```
+
+Here's an example of such a listener:
+
+```php
+<?php
+
+namespace App\Listeners;
+
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
+
+class IssueOpened implements ShouldQueue
+{
+    public function handle(GitHubWebhookCall $webhookCall)
+    {
+        // do your work here
+
+        // you can access the payload of the webhook call with `$webhookCall->payload`
+    }
+}
+```
+
+We highly recommend that you make the event listener queueable, as this will minimize the response time of the webhook
+requests. This allows you to handle more GitHub webhook requests and avoid timeouts.
+
+The above example is only one way to handle events in Laravel. To learn the other options,
+read [the Laravel documentation on handling events](https://laravel.com/docs/5.5/events).
+
+## Deleting processed webhooks
+
+The `Spatie\GitHubWebhooks\Models\GitHubWebhookCall` is [`MassPrunable`](https://laravel.com/docs/8.x/eloquent#mass-pruning). To delete all processed webhooks every day you can schedule this command.
+
+```php
+$schedule->command('model:prune', [
+    '--model' => [\Spatie\GitHubWebhooks\Models\GitHubWebhookCall::class],
+])->daily();
+```
+
+All models that are older than the specified amount of days in the `prune_webhook_calls_after_days` key of the `github-webhooks` config file will be deleted.
+
+## Advanced usage
+
+### Retry handling a webhook
+
+All incoming webhook requests are written to the database. This is incredibly valuable when something goes wrong while
+handling a webhook call. You can easily retry processing the webhook call, after you've investigated and fixed the cause
+of failure, like this:
+
+```php
+use Spatie\GitHubWebhooks\Models\GitHubWebhookCall;
+use Spatie\GitHubWebhooks\Jobs\ProcessGitHubWebhookJob;
+
+dispatch(new ProcessGitHubWebhookJob(GitHubWebhookCall::find($id)));
+```
+
+### Performing custom logic
+
+You can add some custom logic that should be executed before and/or after the scheduling of the queued job by using your
+own model. You can do this by specifying your own model in the `model` key of the `github-webhooks` config file. The
+class should extend `Spatie\GitHubWebhooks\ProcessGitHubWebhookJob`.
+
+Here's an example:
+
+```php
+use Spatie\GitHubWebhooks\Jobs\ProcessGitHubWebhookJob;
+
+class MyCustomGitHubWebhookJob extends ProcessGitHubWebhookJob
+{
+    public function handle()
+    {
+        // do some custom stuff beforehand
+
+        parent::handle();
+
+        // do some custom stuff afterwards
+    }
+}
+```
+
+### Determine if a request should be processed
+
+You may use your own logic to determine if a request should be processed or not. You can do this by specifying your own
+profile in the `profile` key of the `github-webhooks` config file. The class should
+implement `Spatie\WebhookClient\WebhookProfile\WebhookProfile`.
+
+GitHub might occasionally send a webhook
+request [more than once](https://github.com/docs/webhooks/best-practices#duplicate-events). In this example we will make
+sure to only process a request if it wasn't processed before.
+
+```php
+use Illuminate\Http\Request;
+use Spatie\WebhookClient\Models\WebhookCall;
+use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
+
+class GitHubWebhookProfile implements WebhookProfile
+{
+    public function shouldProcess(Request $request): bool
+    {
+        return ! WebhookCall::where('payload->id', $request->get('id'))->exists();
+    }
+}
+```
+
+## Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information about what has changed recently.
+
+## Testing
+
+```bash
+composer test
+```
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Please see [CONTRIBUTING](https://github.com/spatie/.github/blob/main/CONTRIBUTING.md) for details.
 
-## Code of Conduct
+## Security
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+If you've found a bug regarding security please mail [security@spatie.be](mailto:security@spatie.be) instead of using the issue tracker.
 
-## Security Vulnerabilities
+## Credits
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- [Freek Van der Herten](https://github.com/freekmurze)
+- [All Contributors](../../contributors)
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
