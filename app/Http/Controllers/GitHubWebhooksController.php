@@ -27,10 +27,11 @@ class GitHubWebhooksController
                 'X-GitHub-Delivery',
             ],
         ]);
-
+        ds('githubwebhooks');
         try {
             (new WebhookProcessor($request, $webhookConfig))->process();
         } catch (InvalidWebhookSignature) {
+            ds('message.  invalid  signature' );
             return response()->json(['message' => 'invalid signature'], Response::HTTP_FORBIDDEN);
         }
 

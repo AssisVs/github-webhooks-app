@@ -17,6 +17,7 @@ class ProcessGitHubWebhookJob extends ProcessWebhookJob
 
     public function handle()
     {
+        ds('Processgithubwebhookjob - $webhookcall'. $webhookCall);
         event("github-webhooks::{$this->webhookCall->eventName()}", $this->webhookCall);
         event("github-webhooks::{$this->webhookCall->eventActionName()}", $this->webhookCall);
 

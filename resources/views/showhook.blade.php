@@ -10,7 +10,7 @@
                 <div class="alert alert-danger" role="alert">{!!$value!!}</div>
              @endsession
 
-            @session('errorMessage')
+            @session('message')
                 <div class="alert alert-danger" role="alert">{!!$value!!}</div>
             @endsession
 
