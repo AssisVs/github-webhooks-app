@@ -1,6 +1,6 @@
 <x-layout>
     <div>
-        <h2>Teste layout</h2>
+        <h2>Teste lista webhooks cadastradas</h2>
         <div>
             @session('success')
                 <div class="alert alert-success" role="alert">{!!$value!!}</div>
@@ -13,7 +13,6 @@
             @session('errorMessage')
                 <div class="alert alert-danger" role="alert">{!!$value!!}</div>
             @endsession
-            ds('success  ruim')
 
         </div>
         <div>

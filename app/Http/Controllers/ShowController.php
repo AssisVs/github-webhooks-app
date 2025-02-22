@@ -16,7 +16,7 @@ class ShowController extends Controller
 
        /**   Recuperar os registros do banco */
             $webhooks = GitHubWebhookCall::get();
-dsd($webhooks);
+ds('showarray', $webhooks);
             return view('showhook', ['webhooks' => $webhooks]);
     }
 }
